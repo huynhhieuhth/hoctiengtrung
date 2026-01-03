@@ -227,8 +227,18 @@ function autoCheck(){
 }
 
 /* HINT */
-function showPinyin(){document.getElementById("feedback").innerHTML=shuffled[index].py}
-function showVietnamese(){document.getElementById("feedback").innerHTML=shuffled[index].vi}
+function showPinyin(){
+  document.getElementById("feedback").innerHTML =
+    `<div style="margin-top:10px;color:#4b5563;font-size:17px">
+       ${shuffled[index].py || ""}
+     </div>`;
+}
+function showVietnamese(){
+  document.getElementById("feedback").innerHTML +=
+    `<div style="margin-top:6px;font-size:17px">
+       ${shuffled[index].vi || ""}
+     </div>`;
+}
 
 /* SHOW ANSWER — điền trực tiếp vào câu */
 function showAnswer(){
