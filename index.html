@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>公司汉语 – Unit 1 公司机构</title>
+
+<style>
+body{font-family:Arial;background:#f4f6ff;padding:16px}
+.card{background:#fff;max-width:900px;margin:auto;padding:24px;border-radius:20px;box-shadow:0 16px 36px rgba(0,0,0,.08)}
+h1{text-align:center}
+
+button{padding:10px 16px;border-radius:12px;border:none;margin:6px;cursor:pointer;font-size:16px}
+.primary{background:#6366f1;color:#fff}
+.hint{background:#e0e7ff}
+
+input{
+ width:100%;padding:16px;border-radius:14px;
+ border:2px solid #d0d3ff;font-size:18px;margin-top:16px;
+ outline:none;transition:.25s
+}
+input:focus{
+ border-color:#6366f1;
+ box-shadow:0 10px 24px rgba(99,102,241,.25)
+}
+.ok{background:#ecfdf5!important;border-color:#22c55e!important;color:#065f46}
+.bad{background:#fef2f2!important;border-color:#ef4444!important;color:#7f1d1d}
+
+.blank{
+ border-bottom:3px solid #8b5cf6;
+ padding:2px 6px;
+ color:#8b5cf6;
+ font-weight:bold;
+}
+.answer-word{
+ color:#16a34a;
+ font-weight:bold;
+ text-decoration:underline;
+}
+
+.grammar{background:#f1f5ff;border-radius:12px;padding:12px;margin-top:16px}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h1>公司汉语 – Unit 1 公司机构</h1>
+
+<div style="text-align:center">
+ <button onclick="start()" class="primary">▶ Bắt đầu luyện</button>
+ <button onclick="next()" class="primary">⏭ Tiếp tục</button>
+</div>
+
+<div id="study" class="hidden">
+
+  <div id="exercise"></div>
+
+  <input id="answer"
+         placeholder="Nhập tiếng Trung (không cần gõ dấu câu)…"
+         oninput="autoCheck()" />
+
+  <div>
+    <button class="primary" onclick="playAudio()">🔊 Nghe lại</button>
+    <button class="hint" onclick="showPinyin()">💡 Pinyin</button>
+    <button class="hint" onclick="showVietnamese()">💡 Nghĩa</button>
+    <button onclick="showAnswer()">👀 Đáp án</button>
+  </div>
+
+  <div id="feedback"></div>
+  <div id="grammar"></div>
+</div>
+
+</div>
+
+
+<script>
+
+/* chuẩn hoá */
+function normalize(s){
+ return s.replace(/[\s，。、！？,.!？；：“”‘’—…-]/g,"").trim();
+}
+
+/* ===================== 39 CÂU NGHE ===================== */
+const sentences = [
+["刘波通过了远大公司的面试，成为这家公司的销售部经理。","Liú Bō tōngguòle Yuǎndà gōngsī de miànshì，chéngwéi zhè jiā gōngsī de xiāoshòu bù jīnglǐ。","Lưu Ba vượt qua phỏng vấn và trở thành trưởng phòng kinh doanh của công ty。","通过…成为…： thông qua… trở thành…"],
+["他第一次来到公司报到。","Tā dì yī cì lái dào gōngsī bàodào。","Anh ấy lần đầu đến công ty để nhận việc。","报到： nhận việc"],
+["正式上班之前，公司安排他先了解一下公司机构。","Zhèngshì shàngbān zhīqián，gōngsī ānpái tā xiān liǎojiě gōngsī jīgòu。","Trước khi chính thức đi làm, công ty sắp xếp anh ấy tìm hiểu cơ cấu tổ chức。","安排： sắp xếp"],
+["秘书王苹负责接待他。","Mìshū Wáng Píng fùzé jiēdài tā。","Thư ký Vương Bình phụ trách tiếp đón anh ấy。","负责接待： phụ trách tiếp đón"],
+["我姓王，叫王苹，是陈总的秘书。","Wǒ xìng Wáng，jiào Wáng Píng，shì Chén zǒng de mìshū。","Tôi họ Vương, tên là Vương Bình, là thư ký của Tổng giám đốc Trần。","A 是 B： là…"],
+["欢迎您加入远大公司。","Huānyíng nín jiārù Yuǎndà gōngsī。","Chào mừng anh gia nhập công ty Viễn Đại。","欢迎…： chào mừng…"],
+["以后我们要经常在一起工作。","Yǐhòu wǒmen yào jīngcháng zài yìqǐ gōngzuò。","Sau này chúng ta sẽ thường xuyên làm việc cùng nhau。","以后…要…"],
+["有什么需要帮忙的，您尽管说。","Yǒu shénme xūyào bāngmáng de，nín jǐnguǎn shuō。","Nếu cần giúp gì cứ nói。","尽管： cứ việc…"],
+["那我先给您简单介绍一下公司机构吧。","Nà wǒ xiān gěi nín jiǎndān jièshào yíxià gōngsī jīgòu ba。","Vậy để tôi giới thiệu sơ qua về cơ cấu công ty。","先…： trước tiên…"],
+["我们公司的董事长是布莱克先生。","Wǒmen gōngsī de dǒngshìzhǎng shì Bùláikè xiānsheng。","Chủ tịch công ty chúng tôi là ông Blake。","董事长： chủ tịch"],
+["公司是他于1981年在美国创立的。","Gōngsī shì tā yú 1981 nián zài Měiguó chuànglì de。","Công ty do ông ấy sáng lập tại Mỹ năm 1981。","是…的： nhấn mạnh"],
+["我们公司在世界十几个国家都有分公司。","Wǒmen gōngsī zài shìjiè shí jǐ gè guójiā dōu yǒu fēngōngsī。","Công ty chúng tôi có chi nhánh ở hơn chục quốc gia。","都有： đều có"],
+["中国分公司的工作主要是陈总负责。","Zhōngguó fēngōngsī de gōngzuò zhǔyào shì Chén zǒng fùzé。","Chi nhánh Trung Quốc chủ yếu do tổng giám đốc Trần phụ trách。","主要…负责"],
+["他也是亚太区的副总裁。","Tā yě shì Yàtàiqū de fù zǒngcái。","Ông ấy cũng là phó tổng phụ trách khu vực châu Á – TBD。","也是： cũng là"],
+["行政副总叫吴文青，是一位女士。","Xíngzhèng fùzǒng jiào Wú Wénqīng，shì yí wèi nǚshì。","Phó tổng hành chính tên là Ngô Văn Thanh, là nữ。","叫： tên là"],
+["生产副总是周健。","Shēngchǎn fùzǒng shì Zhōu Jiàn。","Phó tổng sản xuất là Chu Kiện。","副总： phó tổng"],
+["技术总监是格林先生。","Jìshù zǒngjiān shì Gélín xiānsheng。","Giám đốc kỹ thuật là ông Green。","总监： giám đốc"],
+["很多人觉得跟他一起工作很愉快。","Hěn duō rén juéde gēn tā yìqǐ gōngzuò hěn yúkuài。","Nhiều người cảm thấy làm việc với ông ấy rất vui。","觉得： cảm thấy"],
+["因为他对自己的下属非常宽厚。","Yīnwèi tā duì zìjǐ de xiàshǔ fēicháng kuānhòu。","Vì ông ấy rất rộng lượng với cấp dưới。","因为： vì…"],
+["负责销售部和商务发展部的是江原。","Fùzé xiāoshòu bù hé shāngwù fāzhǎn bù de shì Jiāng Yuán。","Người phụ trách phòng kinh doanh và phát triển thương mại là cô Giang Nguyên。","负责…的是…"],
+["今天她不在公司。","Jīntiān tā bú zài gōngsī。","Hôm nay cô ấy không ở công ty。","不在： không ở"],
+["下周一才能回来。","Xià zhōuyī cáinéng huílái。","Thứ hai tuần sau cô ấy mới về。","才能： mãi mới…"],
+["秘书王苹正在给参观者介绍公司的组织机构。","Mìshū Wáng Píng zhèngzài gěi cānguānzhě jièshào gōngsī zǔzhī jīgòu。","Vương Bình đang giới thiệu cơ cấu tổ chức cho khách tham quan。","正在： đang…"],
+["这是我们公司的组织机构图。","Zhè shì wǒmen gōngsī de zǔzhī jīgòu tú。","Đây là sơ đồ cơ cấu tổ chức của công ty。","这是： đây là…"],
+["销售副总负责销售部和商务发展部。","Xiāoshòu fùzǒng fùzé xiāoshòu bù hé shāngwù fāzhǎn bù。","Phó tổng kinh doanh phụ trách phòng kinh doanh và phát triển thương mại。","负责： phụ trách"],
+["商务发展部负责全球联盟和市场渠道的开拓。","Shāngwù fāzhǎn bù fùzé quánqiú liánméng hé shìchǎng qúdào de kāità。","Phòng phát triển thương mại phụ trách liên minh toàn cầu và khai thác kênh thị trường。","开拓： khai thác"],
+["接下来是技术总监负责的部门。","Jiē xiàlái shì jìshù zǒngjiān fùzé de bùmén。","Tiếp theo là các phòng do giám đốc kỹ thuật phụ trách。","接下来： tiếp theo"],
+["行政副总负责行政部、人事部和财务部。","Xíngzhèng fùzǒng fùzé xíngzhèng bù，rénshì bù hé cáiwù bù。","Phó tổng hành chính phụ trách hành chính, nhân sự và tài vụ。","行政 人事 财务"],
+["所有部门相互配合。","Suǒyǒu bùmén xiānghù pèihé。","Tất cả các phòng ban phối hợp lẫn nhau。","相互： lẫn nhau"],
+["共同努力。","Gòngtóng nǔlì。","Cùng nỗ lực。","共同： cùng nhau"],
+["这才有了今天的成绩。","Zhè cái yǒule jīntiān de chéngjì。","Nhờ vậy mới có thành tựu hôm nay。","这才： nhờ vậy mới…"],
+["刘波觉得公司的机构十分清楚。","Liú Bō juéde gōngsī de jīgòu shífēn qīngchǔ。","Lưu Ba cảm thấy cơ cấu công ty rất rõ ràng。","十分： rất"],
+["他感谢秘书的热情介绍。","Tā gǎnxiè mìshū de rèqíng jièshào。","Anh ấy cảm ơn sự giới thiệu nhiệt tình của thư ký。","热情： nhiệt tình"],
+["他对以后的工作充满信心。","Tā duì yǐhòu de gōngzuò chōngmǎn xìnxīn。","Anh ấy tràn đầy tự tin với công việc sau này。","充满信心： đầy tự tin"],
+["这一天他学到了很多新词汇。","Zhè yì tiān tā xuédàole hěn duō xīn cíhuì。","Ngày hôm đó anh ấy học được nhiều từ mới。","学到： học được"],
+["他打算回去好好复习。","Tā dǎsuàn huíqù hǎohǎo fùxí。","Anh ấy dự định về nhà ôn tập thật tốt。","打算： dự định"],
+["他觉得加入这家公司是一个不错的选择。","Tā juéde jiārù zhè jiā gōngsī shì yí gè búcuò de xuǎnzé。","Anh ấy cảm thấy gia nhập công ty này là lựa chọn tốt。","不错： khá tốt"],
+["他期待着新的开始。","Tā qídàizhe xīn de kāishǐ。","Anh ấy mong đợi một khởi đầu mới。","期待： mong đợi"]
+].map(x=>({type:"listen",cn:x[0],py:x[1],vi:x[2],gr:x[3]}));
+
+/* ===================== 12 CÂU ĐIỀN TỪ ===================== */
+const fill = [
+["中国于2001年底正式加入了WTO。","Zhōngguó yú 2001 nián dǐ zhèngshì jiārùle WTO。","Trung Quốc gia nhập WTO cuối năm 2001。","加入","động từ"],
+["这家公司最初成立于上海，后来才搬到广州。","Zhè jiā gōngsī zuìchū chénglì yú Shànghǎi，hòulái cái bān dào Guǎngzhōu。","Công ty ban đầu thành lập tại Thượng Hải, sau đó chuyển đến Quảng Châu。","成立","động từ"],
+["向你请教一个问题，这个汉字是什么意思？","Xiàng nǐ qǐngjiào yí gè wèntí，zhège hànzì shì shénme yìsi？","Hỏi bạn một điều, chữ Hán này nghĩa là gì？","请教","động từ"],
+["他办事非常认真，态度严谨，一丝不苟。","Tā bànshì fēicháng rènzhēn，tàidu yánjǐn，yì sī bù gǒu。","Anh ấy làm việc rất nghiêm túc, cẩn thận。","严谨","tính từ"],
+["他关心、体贴他的下属。","Tā guānxīn、tǐtiē tā de xiàshǔ。","Anh ấy quan tâm và chu đáo với cấp dưới。","下属","danh từ"],
+["他为人很宽厚，很少批评别人。","Tā wéirén hěn kuānhòu，hěn shǎo pīpíng biérén。","Anh ấy là người rộng lượng, ít khi phê bình người khác。","宽厚","tính từ"],
+["这间展览室里摆的都是我们公司的最新产品。","Zhè jiān zhǎnlǎnshì lǐ bǎi de dōu shì wǒmen gōngsī de zuìxīn chǎnpǐn。","Trong phòng triển lãm này trưng bày toàn sản phẩm mới nhất。","展览室","danh từ"],
+["欢迎大家来公司参观。","Huānyíng dàjiā lái gōngsī cānguān。","Hoan nghênh mọi người đến thăm công ty。","参观","động từ"],
+["现在各种各样的商务活动非常多。","Xiànzài gè zhǒng gè yàng de shāngwù huódòng fēicháng duō。","Hiện nay có rất nhiều hoạt động thương mại。","商务","danh từ"],
+["要建立一个有效交流意见的渠道。","Yào jiànlì yí gè yǒuxiào jiāoliú yìjiàn de qúdào。","Cần xây dựng kênh trao đổi ý kiến hiệu quả。","渠道","danh từ"],
+["今年的采购任务完成了吗？","Jīnnián de cǎigòu rènwu wánchéng le ma？","Nhiệm vụ thu mua năm nay đã hoàn thành chưa？","采购","động từ"],
+["联合国总部设在纽约。","Liánhéguó zǒngbù shè zài Niǔyuē。","Trụ sở Liên Hợp Quốc đặt tại New York。","总部","danh từ"]
+].map(x=>({type:"fill",cn:x[0],py:x[1],vi:x[2],missing:x[3],pos:x[4]}));
+
+/* ===================== STATE ===================== */
+const data=[...sentences,...fill];
+let shuffled=[];
+let index=0;
+let started=false;
+
+/* ===================== START ===================== */
+function start(){
+ started=true;
+ shuffled=[...data].sort(()=>Math.random()-0.5);
+ index=0;
+ document.getElementById("study").classList.remove("hidden");
+ showQuestion();
+}
+
+/* ===================== SHOW QUESTION ===================== */
+function showQuestion(){
+
+ let q=shuffled[index];
+ let ans=document.getElementById("answer");
+ ans.value="";
+ ans.classList.remove("ok","bad");
+
+ document.getElementById("feedback").innerHTML="";
+ document.getElementById("grammar").innerHTML="";
+
+ let html=`<h3>Câu ${index+1}/${shuffled.length}</h3>`;
+
+if(q.type==="listen"){
+   html+=`
+   <p>📢 Nghe & nhập lại câu</p>
+   <div id='sentence' style='font-size:22px;margin-top:10px;color:#999'>
+     （Nghe câu tiếng Trung và gõ lại vào ô bên dưới）
+   </div>`;
+}
+ else{
+   let masked=q.cn.replace(q.missing,`<span id='blank' class='blank'>_____</span>`);
+   html+=`
+   <p>✏ Điền từ vào chỗ trống</p>
+   <div id='sentence' style="font-size:22px;margin-top:10px">${masked}</div>
+   <div style="color:#666;margin-top:6px">Loại từ: <b>${q.pos}</b></div>`;
+ }
+
+ document.getElementById("exercise").innerHTML=html;
+
+ setTimeout(playAudio,250);
+ ans.focus();
+}
+
+/* NEXT */
+function next(){
+ index++;
+ if(index>=shuffled.length){
+  document.getElementById("exercise").innerHTML="<h3>🎉 Hoàn thành Unit 1!</h3>";
+  return;
+ }
+ showQuestion();
+}
+
+/* AUDIO */
+function playAudio(){
+ let q=shuffled[index];
+ let u=new SpeechSynthesisUtterance(q.cn);
+ u.lang="zh-CN";
+ speechSynthesis.cancel();
+ speechSynthesis.speak(u);
+}
+
+/* AUTO CHECK */
+function autoCheck(){
+ let q=shuffled[index];
+ let ans=document.getElementById("answer");
+
+ let v=normalize(ans.value);
+ let c=q.type==="fill"?normalize(q.missing):normalize(q.cn);
+
+ ans.classList.remove("ok","bad");
+ if(!v.length) return;
+
+ if(v===c){
+  ans.classList.add("ok");
+ }else{
+  ans.classList.add("bad");
+ }
+}
+
+/* HINT */
+function showPinyin(){document.getElementById("feedback").innerHTML=shuffled[index].py}
+function showVietnamese(){document.getElementById("feedback").innerHTML=shuffled[index].vi}
+
+/* SHOW ANSWER — điền trực tiếp vào câu */
+function showAnswer(){
+ let q=shuffled[index];
+
+ if(q.type==="fill"){
+   document.getElementById("sentence").innerHTML=
+     q.cn.replace(q.missing,`<span class='answer-word'>${q.missing}</span>`);
+ } else {
+   document.getElementById("feedback").innerHTML=q.cn;
+ }
+}
+
+</script>
+
+</body>
+</html>
