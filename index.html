@@ -25,6 +25,20 @@ input:focus{border-color:#667eea;background:white;box-shadow:0 0 0 4px rgba(102,
 #meaning{margin-top:15px;font-size:19px;color:#059669;font-weight:500;background:rgba(5,150,105,.05);padding:12px 16px;border-radius:12px;border-left:4px solid #059669}
 .confetti{position:fixed;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:9999}
 @keyframes confetti-fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}
+.historyItem{background:white;border-radius:12px;padding:16px;margin-bottom:12px;border-left:4px solid #e5e7eb;transition:all .2s}
+.historyItem:hover{transform:translateX(4px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.historyItem.correct{border-left-color:#16a34a;background:rgba(16,185,129,.05)}
+.historyItem.wrong{border-left-color:#dc2626;background:rgba(239,68,68,.05)}
+.historyItem.skipped{border-left-color:#f59e0b;background:rgba(245,158,11,.05)}
+.historyMeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:#6b7280}
+.historyQuestion{font-size:18px;color:#1f2937;margin:8px 0}
+.historyAnswer{font-size:16px;margin-top:8px;padding:8px;border-radius:6px;background:rgba(0,0,0,.02)}
+.userAnswer{color:#0ea5e9;font-weight:600}
+.correctAnswer{color:#16a34a;font-weight:600}
+.statusBadge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.statusBadge.correct{background:#dcfce7;color:#16a34a}
+.statusBadge.wrong{background:#fee2e2;color:#dc2626}
+.statusBadge.skipped{background:#fef3c7;color:#d97706}
 </style>
 </head>
 
@@ -37,6 +51,7 @@ input:focus{border-color:#667eea;background:white;box-shadow:0 0 0 4px rgba(102,
 <div class="center">
 <button onclick="start()">▶ Bắt đầu</button>
 <button onclick="next()" id="nextBtn" class="hidden">⏭ Tiếp tục</button>
+<button onclick="toggleHistory()" id="historyBtn" class="hidden">📋 Xem lại</button>
 </div>
 
 <div id="main" class="hidden">
@@ -60,11 +75,20 @@ input:focus{border-color:#667eea;background:white;box-shadow:0 0 0 4px rgba(102,
 
 </div>
 
+<div id="historyView" class="hidden">
+<h3 style="color:#667eea;margin-bottom:20px">📋 Lịch sử làm bài</h3>
+<div id="historyList"></div>
+<div class="center" style="margin-top:20px">
+<button onclick="toggleHistory()">◀ Quay lại</button>
+<button onclick="clearHistory()" style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%)">🗑 Xóa lịch sử</button>
+</div>
+</div>
+
 </div>
 
 <script>
 
-/************* UNIT 1 — 52 CÂU *************/
+/************* UNIT 1 – 48 CÂU *************/
 
 let questions = [
 
@@ -96,10 +120,10 @@ let questions = [
 {type:"listen",cnWords:["中国","分公司的","工作，"],pyWords:["Zhōngguó","fēngōngsī de","gōngzuò,"],vi:"Công việc của chi nhánh Trung Quốc,"},
 {type:"listen",cnWords:["主要","是","陈总","负责。"],pyWords:["zhǔyào","shì","Chén zǒng","fùzé."],vi:"chủ yếu do Tổng giám đốc Trần phụ trách。"},
 
-{type:"listen",cnWords:["他","也是","亚太区","的","副总裁。"],pyWords:["Tā","yě shì","Yàtàiqū","de","fù zǒngcái."],vi:"Ông cũng là phó tổng phụ trách khu vực châu Á–TBD。"},
+{type:"listen",cnWords:["他","也是","亚太区","的","副总裁。"],pyWords:["Tā","yě shì","Yàtàiqū","de","fù zǒngcái."],vi:"Ông cũng là phó tổng phụ trách khu vực châu Á—TBD。"},
 
 {type:"listen",cnWords:["行政","副总","叫","吴文青，"],pyWords:["Xíngzhèng","fùzǒng","jiào","Wú Wénqīng,"],vi:"Phó tổng hành chính tên là Ngô Văn Thanh,"},
-{type:"listen",cnWords:["她","是一位","女士。"],pyWords:["tā","shì yí wèi","nǚshì."],vi:"bà ấy là nữ。"},
+{type:"listen",cnWords:["她","是一位","女士。"],pyWords:["tā","shì yī wèi","nǚshì."],vi:"bà ấy là nữ。"},
 
 {type:"listen",cnWords:["生产","副总","是","周健。"],pyWords:["Shēngchǎn","fùzǒng","shì","Zhōu Jiàn."],vi:"Phó tổng sản xuất là Chu Kiện。"},
 
@@ -135,40 +159,89 @@ let questions = [
 
 /********** 填空 12 **********/
 
-{type:"fill",cnWords:["中国","于","2001年","底","正式","加入","了","WTO。"],pyWords:["Zhōngguó","yú","èr líng líng yī nián","dǐ","zhèngshì","jiārù","le","WTO."],missing:"加入",vi:"Trung Quốc gia nhập WTO vào cuối năm 2001。"},
+{type:"fill",
+ cnWords:["中国","于","2001年","底","正式","加入","了","WTO。"],
+ pyWords:["Zhōngguó","yú","èr líng líng yī nián","dǐ","zhèngshì","jiārù","le","WTO."],
+ missing:"加入",
+ vi:"Trung Quốc gia nhập WTO vào cuối năm 2001。"},
 
-{type:"fill",cnWords:["他","向","我","请教","一个","问题。"],pyWords:["Tā","xiàng","wǒ","qǐngjiào","yí gè","wèntí."],missing:"请教",vi:"Anh ấy thỉnh giáo tôi một câu hỏi。"},
+{type:"fill",
+ cnWords:["他","向","我","请教","一个","问题。"],
+ pyWords:["Tā","xiàng","wǒ","qǐngjiào","yí gè","wèntí."],
+ missing:"请教",
+ vi:"Anh ấy thỉnh giáo tôi một câu hỏi。"},
 
-{type:"fill",cnWords:["这家","公司","最初","成立","于","上海。"],pyWords:["Zhè jiā","gōngsī","zuìchū","chénglì","yú","Shànghǎi."],missing:"成立",vi:"Công ty ban đầu thành lập tại Thượng Hải。"},
+{type:"fill",
+ cnWords:["这家","公司","最初","成立","于","上海。"],
+ pyWords:["Zhè jiā","gōngsī","zuìchū","chénglì","yú","Shànghǎi."],
+ missing:"成立",
+ vi:"Công ty ban đầu thành lập tại Thượng Hải。"},
 
-{type:"fill",cnWords:["他","办事","非常","认真，","态度","严谨。"],pyWords:["Tā","bànshì","fēicháng","rènzhēn,","tàidù","yánjǐn."],missing:"严谨",vi:"Anh ấy làm việc rất nghiêm túc, thái độ chặt chẽ。"},
+{type:"fill",
+ cnWords:["他","办事","非常","认真，","态度","严谨。"],
+ pyWords:["Tā","bànshì","fēicháng","rènzhēn,","tàidù","yánjǐn."],
+ missing:"办事",
+ vi:"Anh ấy làm việc rất nghiêm túc, thái độ chặt chẽ。"},
 
-{type:"fill",cnWords:["因为","关心","下属，","大家","都","很","尊敬","他。"],pyWords:["Yīnwèi","guānxīn","xiàshǔ,","dàjiā","dōu","hěn","zūnjìng","tā."],missing:"下属",vi:"Vì quan tâm đến cấp dưới nên mọi người rất tôn trọng anh ấy。"},
+{type:"fill",
+ cnWords:["因为","关心","下属，","大家","都","很","尊敬","他。"],
+ pyWords:["Yīnwèi","guānxīn","xiàshǔ,","dàjiā","dōu","hěn","zūnjìng","tā."],
+ missing:"下属",
+ vi:"Vì quan tâm đến cấp dưới nên mọi người rất tôn trọng anh ấy。"},
 
-{type:"fill",cnWords:["他","为人","很","宽厚。"],pyWords:["Tā","wéirén","hěn","kuānhòu."],missing:"宽厚",vi:"Anh ấy đối xử với người khác rất khoan dung。"},
+{type:"fill",
+ cnWords:["他","为人","很","宽厚。"],
+ pyWords:["Tā","wéirén","hěn","kuānhòu."],
+ missing:"宽厚",
+ vi:"Anh ấy đối xử với người khác rất khoan dung。"},
 
-{type:"fill",cnWords:["欢迎","大家","来","公司","参观。"],pyWords:["Huānyíng","dàjiā","lái","gōngsī","cānguān."],missing:"参观",vi:"Hoan nghênh mọi người đến tham quan công ty。"},
+{type:"fill",
+ cnWords:["欢迎","大家","来","公司","参观。"],
+ pyWords:["Huānyíng","dàjiā","lái","gōngsī","cānguān."],
+ missing:"参观",
+ vi:"Hoan nghênh mọi người đến tham quan công ty。"},
 
-{type:"fill",cnWords:["这间","展览室","里","摆的","都是","最新","产品。"],pyWords:["Zhè jiān","zhǎnlǎnshì","lǐ","bǎi de","dōu shì","zuìxīn","chǎnpǐn."],missing:"展览室",vi:"Trong phòng triển lãm này trưng bày toàn sản phẩm mới nhất。"},
+{type:"fill",
+ cnWords:["这间","展览室","里","摆的","都是","最新","产品。"],
+ pyWords:["Zhè jiān","zhǎnlǎnshì","lǐ","bǎi de","dōu shì","zuìxīn","chǎnpǐn."],
+ missing:"展览室",
+ vi:"Trong phòng triển lãm này trưng bày toàn sản phẩm mới nhất。"},
 
-{type:"fill",cnWords:["现在","各种各样","商务","活动","非常","多。"],pyWords:["Xiànzài","gèzhǒng gèyàng","shāngwù","huódòng","fēicháng","duō."],missing:"商务",vi:"Hiện nay có rất nhiều hoạt động thương mại khác nhau。"},
+{type:"fill",
+ cnWords:["现在","各种各样","商务","活动","非常","多。"],
+ pyWords:["Xiànzài","gèzhǒng gèyàng","shāngwù","huódòng","fēicháng","duō."],
+ missing:"商务",
+ vi:"Hiện nay có rất nhiều hoạt động thương mại khác nhau。"},
 
-{type:"fill",cnWords:["今年","采购","任务","完成","了吗？"],pyWords:["Jīnnián","cǎigòu","rènwu","wánchéng","le ma?"],missing:"采购",vi:"Nhiệm vụ thu mua năm nay hoàn thành chưa?"},
+{type:"fill",
+ cnWords:["今年","采购","任务","完成","了吗？"],
+ pyWords:["Jīnnián","cǎigòu","rènwu","wánchéng","le ma?"],
+ missing:"采购",
+ vi:"Nhiệm vụ thu mua năm nay hoàn thành chưa?"},
 
-{type:"fill",cnWords:["联合国","总部","设在","纽约。"],pyWords:["Liánhéguó","zǒngbù","shè zài","Niǔyuē."],missing:"总部",vi:"Trụ sở Liên Hợp Quốc đặt tại New York。"},
+{type:"fill",
+ cnWords:["联合国","总部","设在","纽约。"],
+ pyWords:["Liánhéguó","zǒngbù","shè zài","Niǔyuē."],
+ missing:"总部",
+ vi:"Trụ sở Liên Hợp Quốc đặt tại New York。"},
 
-{type:"fill",cnWords:["我们","要","建立","有效","交流","渠道。"],pyWords:["Wǒmen","yào","jiànlì","yǒuxiào","jiāoliú","qúdào."],missing:"渠道",vi:"Chúng tôi cần xây dựng kênh trao đổi hiệu quả。"}
-
+{type:"fill",
+ cnWords:["我们","要","建立","有效","交流","渠道。"],
+ pyWords:["Wǒmen","yào","jiànlì","yǒuxiào","jiāoliú","qúdào."],
+ missing:"渠道",
+ vi:"Chúng tôi cần xây dựng kênh trao đổi hiệu quả。"}
 ];
 
 /************* STATE *************/
 let shuffled=[];
 let index=0;
+let history=[]; // Lưu lịch sử các câu đã làm
 
 /************* START *************/
 function start(){
  document.getElementById("main").classList.remove("hidden");
  document.getElementById("nextBtn").classList.remove("hidden");
+ document.getElementById("historyBtn").classList.remove("hidden");
  shuffled=[...questions].sort(()=>Math.random()-0.5);
  index=0;
  showQuestion();
@@ -176,44 +249,92 @@ function start(){
 
 /************* SHOW *************/
 function showQuestion(){
-
+ // Reset tất cả
  document.getElementById("pinyin").innerHTML="";
  document.getElementById("meaning").innerHTML="";
+ document.getElementById("sentence").innerHTML="";
  document.getElementById("answer").value="";
+ document.getElementById("answer").style.borderColor="#e0e7ff";
+ document.getElementById("answer").style.background="#fafbff";
 
  let q=shuffled[index];
 
  document.getElementById("qtitle").innerText=`Câu ${index+1}/${shuffled.length}`;
 
  if(q.type==="listen"){
-  document.getElementById("instruction").innerText="📢 Nghe & nhập lại câu";
- }else{
+  document.getElementById("instruction").innerText="🔢 Nghe & nhập lại câu";
+  // Câu listen: KHÔNG hiện gì cả
+  document.getElementById("sentence").innerHTML="";
+ }else if(q.type==="fill"){
   document.getElementById("instruction").innerText="✏ Điền từ vào chỗ trống";
-
-  document.getElementById("sentence").innerHTML=
-   q.cnWords.map(w=>w===q.missing?"_____":`<span class='word'>${w}</span>`).join("");
+  // Câu fill: hiện câu với chỗ trống
+  let sentenceHTML = "";
+  for(let i=0; i<q.cnWords.length; i++){
+   if(q.cnWords[i] === q.missing){
+    sentenceHTML += `<span class='word' style='color:#dc2626;font-weight:700'>_____</span>`;
+   }else{
+    sentenceHTML += `<span class='word'>${q.cnWords[i]}</span>`;
+   }
+  }
+  document.getElementById("sentence").innerHTML = sentenceHTML;
  }
 
  playAudio();
 }
 
 /************* AUDIO *************/
+let audioElement = null;
+
 function playAudio(){
- let u=new SpeechSynthesisUtterance(shuffled[index].cnWords.join(""));
- u.lang="zh-CN";
- speechSynthesis.cancel();
- speechSynthesis.speak(u);
+ let text = encodeURIComponent(shuffled[index].cnWords.join(""));
+ let audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=zh-CN&client=tw-ob&q=${text}`;
+ 
+ if(audioElement){
+  audioElement.pause();
+  audioElement = null;
+ }
+ 
+ audioElement = new Audio(audioUrl);
+ audioElement.playbackRate = 0.85;
+ audioElement.play().catch(err => {
+  console.error("Lỗi phát âm thanh:", err);
+  alert("Không thể phát âm thanh. Vui lòng kiểm tra kết nối mạng.");
+ });
 }
 
 /************* CHECK *************/
 function normalize(s){
- return s.replace(/[\s，。、！？,.!？；：“”‘’—…-]/g,"");
+ return s.replace(/[\s，。、！？,.!？；："" ''—…-]/g,"");
 }
 function autoCheck(){
  let q=shuffled[index];
  let v=normalize(document.getElementById("answer").value);
  let real=normalize(q.cnWords.join(""));
- document.getElementById("answer").style.borderColor=(v&&v===real)?"#16a34a":"#d5d9ff";
+ let inp=document.getElementById("answer");
+ if(v&&v===real){
+  inp.style.borderColor="#16a34a";
+  inp.style.background="#f0fdf4";
+  createConfetti();
+ }else{
+  inp.style.borderColor="#e0e7ff";
+  inp.style.background="#fafbff";
+ }
+}
+
+/************* CONFETTI *************/
+function createConfetti(){
+ const colors=['#ff6b6b','#4ecdc4','#45b7d1','#f9ca24','#6c5ce7','#a29bfe','#fd79a8','#fdcb6e'];
+ for(let i=0;i<50;i++){
+  let confetti=document.createElement('div');
+  confetti.className='confetti';
+  confetti.style.left=Math.random()*100+'vw';
+  confetti.style.background=colors[Math.floor(Math.random()*colors.length)];
+  confetti.style.animationDuration=(Math.random()*2+2)+'s';
+  confetti.style.animation='confetti-fall linear forwards';
+  confetti.style.animationDelay=Math.random()*0.3+'s';
+  document.body.appendChild(confetti);
+  setTimeout(()=>confetti.remove(),4000);
+ }
 }
 
 /************* NGHĨA *************/
@@ -223,27 +344,117 @@ function showVietnamese(){
 
 /************* ANSWER *************/
 function showAnswer(){
-
  let q=shuffled[index];
 
  document.getElementById("pinyin").innerHTML=
    q.pyWords.map(p=>`<span class='pin'>${p}</span>`).join("");
 
- document.getElementById("sentence").innerHTML=
+ if(q.type==="listen"){
+  document.getElementById("sentence").innerHTML=
+   q.cnWords.map(w=>`<span class='word answerWord'>${w}</span>`).join("");
+ }else{
+  document.getElementById("sentence").innerHTML=
    q.cnWords.map(w=>
-     (q.type==="fill" && w===q.missing)
+     (w===q.missing)
        ? `<span class='word answerWord'>${w}</span>`
        : `<span class='word'>${w}</span>`
    ).join("");
+ }
 
  document.getElementById("meaning").innerHTML=q.vi;
 }
 
 /************* NEXT *************/
 function next(){
+ // Lưu câu hiện tại vào lịch sử trước khi chuyển
+ saveToHistory();
+
  index++;
  if(index>=shuffled.length) index=0;
  showQuestion();
+}
+
+/************* HISTORY *************/
+function saveToHistory(){
+ let q=shuffled[index];
+ let userInput=document.getElementById("answer").value.trim();
+ let correctAnswer=q.cnWords.join("");
+ let normalizedUser=normalize(userInput);
+ let normalizedCorrect=normalize(correctAnswer);
+
+ let status='skipped';
+ if(userInput){
+  status = (normalizedUser===normalizedCorrect) ? 'correct' : 'wrong';
+ }
+
+ history.push({
+  question:q,
+  userAnswer:userInput || "(Bỏ qua)",
+  correctAnswer:correctAnswer,
+  status:status,
+  timestamp:new Date()
+ });
+}
+
+function toggleHistory(){
+ let main=document.getElementById("main");
+ let historyView=document.getElementById("historyView");
+
+ if(historyView.classList.contains("hidden")){
+  main.classList.add("hidden");
+  historyView.classList.remove("hidden");
+  renderHistory();
+ }else{
+  main.classList.remove("hidden");
+  historyView.classList.add("hidden");
+ }
+}
+
+function renderHistory(){
+ let container=document.getElementById("historyList");
+
+ if(history.length===0){
+  container.innerHTML="<p style='text-align:center;color:#6b7280;padding:40px'>Chưa có câu nào được làm</p>";
+  return;
+ }
+
+ let html="";
+ for(let i=history.length-1; i>=0; i--){
+  let item=history[i];
+  let q=item.question;
+
+  let statusText=item.status==='correct'?'✓ Đúng':(item.status==='wrong'?'✗ Sai':'⊘ Bỏ qua');
+  let statusClass=item.status;
+
+  html+=`<div class="historyItem ${statusClass}">
+   <div class="historyMeta">
+    <span>${q.type==='listen'?'🔢 Nghe':'✏ Điền từ'}</span>
+    <span class="statusBadge ${statusClass}">${statusText}</span>
+   </div>
+   <div class="historyQuestion">
+    ${q.cnWords.map((w,idx)=>`<span class='word'>${w}</span>`).join("")}
+   </div>
+   <div style="font-size:15px;color:#6b7280;margin:4px 0">
+    ${q.pyWords.map(p=>`<span class='pin'>${p}</span>`).join("")}
+   </div>
+   <div style="font-size:16px;color:#059669;margin:4px 0">${q.vi}</div>
+   ${item.status!=='skipped'?`
+   <div class="historyAnswer">
+    <div><strong>Bạn trả lời:</strong> <span class="userAnswer">${item.userAnswer}</span></div>
+    ${item.status==='wrong'?`<div><strong>Đáp án đúng:</strong> <span class="correctAnswer">${item.correctAnswer}</span></div>`:''}
+   </div>
+   `:''}
+  </div>`;
+ }
+
+ container.innerHTML=html;
+}
+
+function clearHistory(){
+ if(confirm("Bạn có chắc muốn xóa toàn bộ lịch sử?")){
+  history=[];
+  renderHistory();
+ }
 }
 
 </script>
